@@ -35,6 +35,14 @@ const wall = {
 	]
 }
 
+const box = {
+	color: "#888888",
+	pos: [
+		{x: game.tileSize * 3, y: game.tileSize * 3},
+		{x: game.tileSize * 3, y: game.tileSize * 5}
+	]
+}
+
 const controller = {
 	up: "ArrowUp",
 	down: "ArrowDown",
@@ -164,8 +172,14 @@ function draw() {
 		wall.pos.forEach(wall => canvas.screen.fillRect(wall.x, wall.y, game.tileSize, game.tileSize));
 	}
 
+	function drawBox() {
+		canvas.screen.fillStyle = box.color;
+		box.pos.forEach(box => canvas.screen.fillRect(box.x, box.y, game.tileSize, game.tileSize));
+	}
+
 	drawPlayer();
 	drawWall();
+	drawBox();
 }
 
 function update() {
