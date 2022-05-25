@@ -87,10 +87,9 @@ const inputs = {
 	up: 0,
 	down: 0,
 	left: 0,
-	right: 0
+	right: 0,
+	lastMove: 0
 }
-
-let lastMove = 0;
 
 function keyPressListener(event) {
 	if (event.key === controller.up && inputs.up === 0) inputs.up = Date.now();
@@ -222,17 +221,17 @@ function movement() {
 			}
 			else player.y += game.moveDistance * move.y;
 		}
-		if (canMoveX || canMoveY) lastMove = currentTime;
+		if (canMoveX || canMoveY) inputs.lastMove = currentTime;
 	}
 
 	if (move.x === 0 && move.y === 0) {
-		if (lastMove !== 0) lastMove = 0;
+		if (inputs.lastMove !== 0) inputs.lastMove = 0;
 	}
 	
 	if (move.x !== 0 || move.y !== 0) {
-		if (lastMove === 0) movePlayer();
-		if (lastMove !== 0) {
-			if (currentTime - lastMove >= game.moveSpeed) movePlayer();
+		if (inputs.lastMove === 0) movePlayer();
+		if (inputs.lastMove !== 0) {
+			if (currentTime - inputs.lastMove >= game.moveSpeed) movePlayer();
 		}
 	}
 }
