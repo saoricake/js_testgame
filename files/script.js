@@ -1,7 +1,12 @@
-const canvas = document.getElementById("canvas");
-canvas.screen = canvas.getContext("2d");
-canvas.width = 320;
-canvas.height = 288;
+const playCanvas = document.getElementById("playCanvas");
+playCanvas.screen = playCanvas.getContext("2d");
+playCanvas.width = 320;
+playCanvas.height = 288;
+
+const mapCanvas = document.getElementById("mapCanvas");
+mapCanvas.screen = mapCanvas.getContext("2d");
+mapCanvas.width = 320;
+mapCanvas.height = 288;
 
 const game = {
 	tileSize: 32,
@@ -109,11 +114,11 @@ function movement() {
 
 		switch (mainAxis) {
 			case "x":
-				canvasLimit = canvas.width;
+				canvasLimit = playCanvas.width;
 				sideAxis = "y";
 				break;
 			case "y":
-				canvasLimit = canvas.height;
+				canvasLimit = playCanvas.height;
 				sideAxis = "x";
 				break;
 		}
@@ -206,33 +211,33 @@ function movement() {
 
 function draw() {
 	function drawPlayer() {
-		canvas.screen.fillStyle = player.color;
-		canvas.screen.fillRect(player.x, player.y, game.tileSize, game.tileSize);
-	}
-
-	function drawWall() {
-		canvas.screen.fillStyle = wall.color;
-		wall.pos.forEach(wall => canvas.screen.fillRect(wall.x, wall.y, game.tileSize, game.tileSize));
+		playCanvas.screen.fillStyle = player.color;
+		playCanvas.screen.fillRect(player.x, player.y, game.tileSize, game.tileSize);
 	}
 
 	function drawBox() {
-		canvas.screen.fillStyle = box.color;
-		box.pos.forEach(box => canvas.screen.fillRect(box.x, box.y, game.tileSize, game.tileSize));
+		playCanvas.screen.fillStyle = box.color;
+		box.pos.forEach(box => playCanvas.screen.fillRect(box.x, box.y, game.tileSize, game.tileSize));
 	}
 
 	drawPlayer();
-	drawWall();
 	drawBox();
+}
+
+function drawMap() {
+	mapCanvas.screen.fillStyle = wall.color;
+	wall.pos.forEach(wall => mapCanvas.screen.fillRect(wall.x, wall.y, game.tileSize, game.tileSize));
 }
 
 function update() {
 	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
 
-	canvas.screen.clearRect(0, 0, canvas.width, canvas.height);
+	playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
 	movement();
 	draw();
 }
 
 document.addEventListener("keydown", keyPressListener);
 document.addEventListener("keyup", keyReleaseListener);
+drawMap();
 window.requestAnimationFrame(update);
