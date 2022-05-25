@@ -8,6 +8,11 @@ mapCanvas.screen = mapCanvas.getContext("2d");
 mapCanvas.width = 320;
 mapCanvas.height = 288;
 
+const loadCanvas = document.createElement("canvas");
+loadCanvas.screen = loadCanvas.getContext("2d");
+loadCanvas.width = 320;
+loadCanvas.height = 32;
+
 const game = {
 	tileSize: 32,
 	frameRate: 1000 / 60,
@@ -210,23 +215,36 @@ function movement() {
 }
 
 function draw() {
-	function drawPlayer() {
-		playCanvas.screen.fillStyle = player.color;
-		playCanvas.screen.fillRect(player.x, player.y, game.tileSize, game.tileSize);
-	}
-
-	function drawBox() {
-		playCanvas.screen.fillStyle = box.color;
-		box.pos.forEach(box => playCanvas.screen.fillRect(box.x, box.y, game.tileSize, game.tileSize));
-	}
-
-	drawPlayer();
-	drawBox();
+	playCanvas.screen.drawImage(
+		loadCanvas,
+		game.tileSize * 0, 0, game.tileSize, game.tileSize,
+		player.x, player.y, game.tileSize, game.tileSize
+	);
+	box.pos.forEach((box) => {
+		playCanvas.screen.drawImage(
+			loadCanvas,
+			game.tileSize * 1, 0, game.tileSize, game.tileSize,
+			box.x, box.y, game.tileSize, game.tileSize
+		);
+	});
 }
 
-function drawMap() {
-	mapCanvas.screen.fillStyle = wall.color;
-	wall.pos.forEach(wall => mapCanvas.screen.fillRect(wall.x, wall.y, game.tileSize, game.tileSize));
+function initMap() {
+	loadCanvas.screen.fillStyle = player.color;
+	loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
+
+	loadCanvas.screen.fillStyle = box.color;
+	loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
+
+	loadCanvas.screen.fillStyle = wall.color;
+	loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
+	wall.pos.forEach((wall) => {
+		mapCanvas.screen.drawImage(
+			loadCanvas,
+			game.tileSize * 2, 0, game.tileSize, game.tileSize,
+			wall.x, wall.y, game.tileSize, game.tileSize
+		);
+	});
 }
 
 function update() {
@@ -239,5 +257,5 @@ function update() {
 
 document.addEventListener("keydown", keyPressListener);
 document.addEventListener("keyup", keyReleaseListener);
-drawMap();
+initMap();
 window.requestAnimationFrame(update);
