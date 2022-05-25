@@ -22,36 +22,59 @@ const game = {
 
 const player = {
 	color: "#FF0000",
-	x: game.tileSize * 0,
-	y: game.tileSize * 0
-}
-
-const wall = {
-	color: "#FFFFFF",
-	pos: [
-		{x: game.tileSize * 1, y: game.tileSize * 1},
-		{x: game.tileSize * 2, y: game.tileSize * 1},
-		{x: game.tileSize * 7, y: game.tileSize * 1},
-		{x: game.tileSize * 8, y: game.tileSize * 1},
-		{x: game.tileSize * 1, y: game.tileSize * 2},
-		{x: game.tileSize * 8, y: game.tileSize * 2},
-		{x: game.tileSize * 5, y: game.tileSize * 4},
-		{x: game.tileSize * 1, y: game.tileSize * 6},
-		{x: game.tileSize * 8, y: game.tileSize * 6},
-		{x: game.tileSize * 1, y: game.tileSize * 7},
-		{x: game.tileSize * 2, y: game.tileSize * 7},
-		{x: game.tileSize * 7, y: game.tileSize * 7},
-		{x: game.tileSize * 8, y: game.tileSize * 7}
-	]
+	x: 0,
+	y: 0
 }
 
 const box = {
-	color: "#888888",
-	pos: [
-		{x: game.tileSize * 3, y: game.tileSize * 3},
-		{x: game.tileSize * 3, y: game.tileSize * 5}
-	]
+	color: "#888888"
 }
+
+const wall = {
+	color: "#FFFFFF"
+}
+
+const maps = {
+	currentMap: "map1",
+	map1: {
+		player: {
+			initX: game.tileSize * 0, initY: game.tileSize * 0
+		},
+		boxes: [
+			{x: game.tileSize * 3, y: game.tileSize * 3, initX: game.tileSize * 3, initY: game.tileSize * 3},
+			{x: game.tileSize * 3, y: game.tileSize * 5, initX: game.tileSize * 3, initY: game.tileSize * 5}
+		],
+		walls: [
+			{x: game.tileSize * 1, y: game.tileSize * 1},
+			{x: game.tileSize * 2, y: game.tileSize * 1},
+			{x: game.tileSize * 7, y: game.tileSize * 1},
+			{x: game.tileSize * 8, y: game.tileSize * 1},
+			{x: game.tileSize * 1, y: game.tileSize * 2},
+			{x: game.tileSize * 8, y: game.tileSize * 2},
+			{x: game.tileSize * 5, y: game.tileSize * 4},
+			{x: game.tileSize * 1, y: game.tileSize * 6},
+			{x: game.tileSize * 8, y: game.tileSize * 6},
+			{x: game.tileSize * 1, y: game.tileSize * 7},
+			{x: game.tileSize * 2, y: game.tileSize * 7},
+			{x: game.tileSize * 7, y: game.tileSize * 7},
+			{x: game.tileSize * 8, y: game.tileSize * 7}
+		]
+	},
+	map2: {
+		player: {
+			initX: game.tileSize * 7, initY: game.tileSize * 0
+		},
+		boxes: [
+			{x: game.tileSize * 4, y: game.tileSize * 4, initX: game.tileSize * 4, initY: game.tileSize * 4}
+		],
+		walls: [
+			{x: game.tileSize * 1, y: game.tileSize * 1},
+			{x: game.tileSize * 8, y: game.tileSize * 1},
+			{x: game.tileSize * 1, y: game.tileSize * 7},
+			{x: game.tileSize * 8, y: game.tileSize * 7}
+		]
+	}
+};
 
 const controller = {
 	up: "ArrowUp",
@@ -133,7 +156,7 @@ function movement() {
 		}
 
 		function detectWall() {
-			return wall.pos.some((wall) => {
+			return maps[maps.currentMap].walls.some((wall) => {
 				let alignedWithWall;
 				let adjacentToWall;
 
@@ -150,7 +173,7 @@ function movement() {
 		}
 
 		function detectBox() {
-			return box.pos.some((box) => {
+			return maps[maps.currentMap].boxes.some((box) => {
 				let perfectlyAlignedWithBox;
 				let alignedWithBox;
 				let adjacentToBox;
@@ -220,29 +243,11 @@ function draw() {
 		game.tileSize * 0, 0, game.tileSize, game.tileSize,
 		player.x, player.y, game.tileSize, game.tileSize
 	);
-	box.pos.forEach((box) => {
+	maps[maps.currentMap].boxes.forEach((box) => {
 		playCanvas.screen.drawImage(
 			loadCanvas,
 			game.tileSize * 1, 0, game.tileSize, game.tileSize,
 			box.x, box.y, game.tileSize, game.tileSize
-		);
-	});
-}
-
-function initMap() {
-	loadCanvas.screen.fillStyle = player.color;
-	loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
-
-	loadCanvas.screen.fillStyle = box.color;
-	loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
-
-	loadCanvas.screen.fillStyle = wall.color;
-	loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
-	wall.pos.forEach((wall) => {
-		mapCanvas.screen.drawImage(
-			loadCanvas,
-			game.tileSize * 2, 0, game.tileSize, game.tileSize,
-			wall.x, wall.y, game.tileSize, game.tileSize
 		);
 	});
 }
@@ -255,7 +260,54 @@ function update() {
 	draw();
 }
 
+Object.defineProperty(maps, "loadMap", {
+	value: function(map) {
+		loadCanvas.screen.clearRect(0, 0, loadCanvas.width, loadCanvas.height);
+		playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
+		mapCanvas.screen.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+		loadCanvas.screen.fillStyle = player.color;
+		loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
+
+		loadCanvas.screen.fillStyle = box.color;
+		loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
+
+		loadCanvas.screen.fillStyle = wall.color;
+		loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
+
+		player.x = this[map].player.initX;
+		player.y = this[map].player.initY;
+
+		playCanvas.screen.drawImage(
+			loadCanvas,
+			game.tileSize * 0, 0, game.tileSize, game.tileSize,
+			player.x, player.y, game.tileSize, game.tileSize
+		);
+
+		this[map].boxes.forEach((box) => {
+			box.x = box.initX;
+			box.y = box.initY;
+	
+			playCanvas.screen.drawImage(
+				loadCanvas,
+				game.tileSize * 1, 0, game.tileSize, game.tileSize,
+				box.x, box.y, game.tileSize, game.tileSize
+			);
+		});
+
+		this[map].walls.forEach((wall) => {
+			mapCanvas.screen.drawImage(
+				loadCanvas,
+				game.tileSize * 2, 0, game.tileSize, game.tileSize,
+				wall.x, wall.y, game.tileSize, game.tileSize
+			);
+		});
+
+		this.currentMap = map;
+		setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
+	}
+});
+
 document.addEventListener("keydown", keyPressListener);
 document.addEventListener("keyup", keyReleaseListener);
-initMap();
-window.requestAnimationFrame(update);
+maps.loadMap("map1");
