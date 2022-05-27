@@ -36,42 +36,46 @@ const wall = {
 
 const maps = {
 	currentMap: "map1",
+	loadedMap: {
+		boxes: [],
+		walls: []
+	},
 	map1: {
 		player: {
-			initX: game.tileSize * 0, initY: game.tileSize * 0
+			x: 0, y: 0
 		},
 		boxes: [
-			{x: game.tileSize * 3, y: game.tileSize * 3, initX: game.tileSize * 3, initY: game.tileSize * 3},
-			{x: game.tileSize * 3, y: game.tileSize * 5, initX: game.tileSize * 3, initY: game.tileSize * 5}
+			{x: 3, y: 3},
+			{x: 3, y: 5}
 		],
 		walls: [
-			{x: game.tileSize * 1, y: game.tileSize * 1},
-			{x: game.tileSize * 2, y: game.tileSize * 1},
-			{x: game.tileSize * 7, y: game.tileSize * 1},
-			{x: game.tileSize * 8, y: game.tileSize * 1},
-			{x: game.tileSize * 1, y: game.tileSize * 2},
-			{x: game.tileSize * 8, y: game.tileSize * 2},
-			{x: game.tileSize * 5, y: game.tileSize * 4},
-			{x: game.tileSize * 1, y: game.tileSize * 6},
-			{x: game.tileSize * 8, y: game.tileSize * 6},
-			{x: game.tileSize * 1, y: game.tileSize * 7},
-			{x: game.tileSize * 2, y: game.tileSize * 7},
-			{x: game.tileSize * 7, y: game.tileSize * 7},
-			{x: game.tileSize * 8, y: game.tileSize * 7}
+			{x: 1, y: 1},
+			{x: 2, y: 1},
+			{x: 7, y: 1},
+			{x: 8, y: 1},
+			{x: 1, y: 2},
+			{x: 8, y: 2},
+			{x: 5, y: 4},
+			{x: 1, y: 6},
+			{x: 8, y: 6},
+			{x: 1, y: 7},
+			{x: 2, y: 7},
+			{x: 7, y: 7},
+			{x: 8, y: 7}
 		]
 	},
 	map2: {
 		player: {
-			initX: game.tileSize * 7, initY: game.tileSize * 0
+			initX: 7, initY: 0
 		},
 		boxes: [
-			{x: game.tileSize * 4, y: game.tileSize * 4, initX: game.tileSize * 4, initY: game.tileSize * 4}
+			{initX: 4, initY: 4}
 		],
 		walls: [
-			{x: game.tileSize * 1, y: game.tileSize * 1},
-			{x: game.tileSize * 8, y: game.tileSize * 1},
-			{x: game.tileSize * 1, y: game.tileSize * 7},
-			{x: game.tileSize * 8, y: game.tileSize * 7}
+			{x: 1, y: 1},
+			{x: 8, y: 1},
+			{x: 1, y: 7},
+			{x: 8, y: 7}
 		]
 	}
 };
@@ -155,7 +159,7 @@ function movement() {
 		}
 
 		function detectWall() {
-			return maps[maps.currentMap].walls.some((wall) => {
+			return maps.loadedMap.walls.some((wall) => {
 				let alignedWithWall;
 				let adjacentToWall;
 
@@ -172,7 +176,7 @@ function movement() {
 		}
 
 		function detectBox() {
-			return maps[maps.currentMap].boxes.some((box) => {
+			return maps.loadedMap.boxes.some((box) => {
 				let perfectlyAlignedWithBox;
 				let alignedWithBox;
 				let adjacentToBox;
@@ -242,7 +246,7 @@ function draw() {
 		game.tileSize * 0, 0, game.tileSize, game.tileSize,
 		player.x, player.y, game.tileSize, game.tileSize
 	);
-	maps[maps.currentMap].boxes.forEach((box) => {
+	maps.loadedMap.boxes.forEach((box) => {
 		playCanvas.screen.drawImage(
 			loadCanvas,
 			game.tileSize * 1, 0, game.tileSize, game.tileSize,
@@ -274,8 +278,8 @@ Object.defineProperty(maps, "loadMap", {
 		loadCanvas.screen.fillStyle = wall.color;
 		loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
 
-		player.x = this[map].player.initX;
-		player.y = this[map].player.initY;
+		player.x = this[map].player.x * game.tileSize;
+		player.y = this[map].player.y * game.tileSize;
 
 		playCanvas.screen.drawImage(
 			loadCanvas,
@@ -283,22 +287,27 @@ Object.defineProperty(maps, "loadMap", {
 			player.x, player.y, game.tileSize, game.tileSize
 		);
 
+		this.loadedMap.boxes = [];
 		this[map].boxes.forEach((box) => {
-			box.x = box.initX;
-			box.y = box.initY;
-	
+			let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
+			this.loadedMap.boxes.push(loadedBox);
+
 			playCanvas.screen.drawImage(
 				loadCanvas,
 				game.tileSize * 1, 0, game.tileSize, game.tileSize,
-				box.x, box.y, game.tileSize, game.tileSize
+				loadedBox.x, loadedBox.y, game.tileSize, game.tileSize
 			);
 		});
 
+		this.loadedMap.walls = [];
 		this[map].walls.forEach((wall) => {
+			let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
+			this.loadedMap.walls.push(loadedWall);
+
 			mapCanvas.screen.drawImage(
 				loadCanvas,
 				game.tileSize * 2, 0, game.tileSize, game.tileSize,
-				wall.x, wall.y, game.tileSize, game.tileSize
+				loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
 			);
 		});
 
