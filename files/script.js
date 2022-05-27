@@ -21,17 +21,14 @@ const game = {
 }
 
 const player = {
-	color: "#FF0000",
 	x: 0,
 	y: 0
 }
 
-const box = {
-	color: "#888888"
-}
-
-const wall = {
-	color: "#FFFFFF"
+const colors = {
+	player: "#FF0000",
+	boxes: "#888888",
+	walls: "#FFFFFF"
 }
 
 const maps = {
@@ -45,13 +42,13 @@ const maps = {
 		playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
 		mapCanvas.screen.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
-		loadCanvas.screen.fillStyle = player.color;
+		loadCanvas.screen.fillStyle = colors.player;
 		loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
 
-		loadCanvas.screen.fillStyle = box.color;
+		loadCanvas.screen.fillStyle = colors.boxes;
 		loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
 
-		loadCanvas.screen.fillStyle = wall.color;
+		loadCanvas.screen.fillStyle = colors.walls;
 		loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
 
 		player.x = this[map].player.x * game.tileSize;
