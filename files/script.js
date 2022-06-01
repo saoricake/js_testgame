@@ -20,15 +20,16 @@ const game = {
 	moveDistance: 16
 }
 
-const player = {
-	x: 0,
-	y: 0
-}
-
 const colors = {
 	player: "#FF0000",
 	boxes: "#888888",
 	walls: "#FFFFFF"
+}
+
+const loadedData = {
+	player: {x:0,y:0},
+	boxes: [],
+	walls: []
 }
 
 const mapData = [
@@ -72,61 +73,55 @@ const mapData = [
 	}
 ];
 
-const mapHandler = {
-	loadedMap: {
-		boxes: [],
-		walls: []
-	},
-	loadMap: function(map) {
-		loadCanvas.screen.clearRect(0, 0, loadCanvas.width, loadCanvas.height);
-		playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
-		mapCanvas.screen.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+function loadMap(mapIndex) {
+	loadCanvas.screen.clearRect(0, 0, loadCanvas.width, loadCanvas.height);
+	playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
+	mapCanvas.screen.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
 
-		loadCanvas.screen.fillStyle = colors.player;
-		loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
+	loadCanvas.screen.fillStyle = colors.player;
+	loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
 
-		loadCanvas.screen.fillStyle = colors.boxes;
-		loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
+	loadCanvas.screen.fillStyle = colors.boxes;
+	loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
 
-		loadCanvas.screen.fillStyle = colors.walls;
-		loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
+	loadCanvas.screen.fillStyle = colors.walls;
+	loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
 
-		player.x = mapData[map].player.x * game.tileSize;
-		player.y = mapData[map].player.y * game.tileSize;
+	loadedData.player.x = mapData[mapIndex].player.x * game.tileSize;
+	loadedData.player.y = mapData[mapIndex].player.y * game.tileSize;
+
+	playCanvas.screen.drawImage(
+		loadCanvas,
+		game.tileSize * 0, 0, game.tileSize, game.tileSize,
+		loadedData.player.x, loadedData.player.y, game.tileSize, game.tileSize
+	);
+
+	loadedData.boxes = [];
+	mapData[mapIndex].boxes.forEach((box) => {
+		let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
+		loadedData.boxes.push(loadedBox);
 
 		playCanvas.screen.drawImage(
 			loadCanvas,
-			game.tileSize * 0, 0, game.tileSize, game.tileSize,
-			player.x, player.y, game.tileSize, game.tileSize
+			game.tileSize * 1, 0, game.tileSize, game.tileSize,
+			loadedBox.x, loadedBox.y, game.tileSize, game.tileSize
 		);
+	});
 
-		this.loadedMap.boxes = [];
-		mapData[map].boxes.forEach((box) => {
-			let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
-			this.loadedMap.boxes.push(loadedBox);
+	loadedData.walls = [];
+	mapData[mapIndex].walls.forEach((wall) => {
+		let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
+		loadedData.walls.push(loadedWall);
 
-			playCanvas.screen.drawImage(
-				loadCanvas,
-				game.tileSize * 1, 0, game.tileSize, game.tileSize,
-				loadedBox.x, loadedBox.y, game.tileSize, game.tileSize
-			);
-		});
+		mapCanvas.screen.drawImage(
+			loadCanvas,
+			game.tileSize * 2, 0, game.tileSize, game.tileSize,
+			loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
+		);
+	});
 
-		this.loadedMap.walls = [];
-		mapData[map].walls.forEach((wall) => {
-			let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
-			this.loadedMap.walls.push(loadedWall);
-
-			mapCanvas.screen.drawImage(
-				loadCanvas,
-				game.tileSize * 2, 0, game.tileSize, game.tileSize,
-				loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
-			);
-		});
-
-		setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
-	}
-};
+	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
+}
 
 const controller = {
 	up: "ArrowUp",
@@ -207,7 +202,7 @@ function movement() {
 		}
 
 		function detectWall() {
-			return mapHandler.loadedMap.walls.some((wall) => {
+			return loadedData.walls.some((wall) => {
 				let alignedWithWall;
 				let adjacentToWall;
 
@@ -224,7 +219,7 @@ function movement() {
 		}
 
 		function detectBox() {
-			return mapHandler.loadedMap.boxes.some((box) => {
+			return loadedData.boxes.some((box) => {
 				let perfectlyAlignedWithBox;
 				let alignedWithBox;
 				let adjacentToBox;
@@ -238,7 +233,7 @@ function movement() {
 				if (subject[mainAxis] + game.tileSize * move[mainAxis] === box[mainAxis]) adjacentToBox = true;
 	
 				if (perfectlyAlignedWithBox && adjacentToBox) {
-					if (subject === player && ((move.x !== 0 && move.y === 0) || (move.x === 0 && move.y !== 0))) {
+					if (subject === loadedData.player && ((move.x !== 0 && move.y === 0) || (move.x === 0 && move.y !== 0))) {
 						boxToMove = box;
 						return false;
 					}
@@ -252,26 +247,26 @@ function movement() {
 	}
 
 	function movePlayer() {
-		let canMoveX = (move.x !== 0 && !detectCollision(player, "x"));
-		let canMoveY = (move.y !== 0 && !detectCollision(player, "y"));
+		let canMoveX = (move.x !== 0 && !detectCollision(loadedData.player, "x"));
+		let canMoveY = (move.y !== 0 && !detectCollision(loadedData.player, "y"));
 
 		if (canMoveX) {
 			if (boxToMove) {
 				if (!detectCollision(boxToMove, "x")) {
 					boxToMove.x += game.moveDistance * move.x;
-					player.x += game.moveDistance * move.x;
+					loadedData.player.x += game.moveDistance * move.x;
 				}
 			}
-			else player.x += game.moveDistance * move.x;
+			else loadedData.player.x += game.moveDistance * move.x;
 		}
-		if (canMoveY && !detectCollision(player, "y")) {
+		if (canMoveY && !detectCollision(loadedData.player, "y")) {
 			if (boxToMove) {
 				if (!detectCollision(boxToMove, "y")) {
 					boxToMove.y += game.moveDistance * move.y;
-					player.y += game.moveDistance * move.y;
+					loadedData.player.y += game.moveDistance * move.y;
 				}
 			}
-			else player.y += game.moveDistance * move.y;
+			else loadedData.player.y += game.moveDistance * move.y;
 		}
 		if (canMoveX || canMoveY) inputs.lastMove = currentTime;
 	}
@@ -292,9 +287,9 @@ function draw() {
 	playCanvas.screen.drawImage(
 		loadCanvas,
 		game.tileSize * 0, 0, game.tileSize, game.tileSize,
-		player.x, player.y, game.tileSize, game.tileSize
+		loadedData.player.x, loadedData.player.y, game.tileSize, game.tileSize
 	);
-	mapHandler.loadedMap.boxes.forEach((box) => {
+	loadedData.boxes.forEach((box) => {
 		playCanvas.screen.drawImage(
 			loadCanvas,
 			game.tileSize * 1, 0, game.tileSize, game.tileSize,
@@ -313,4 +308,4 @@ function update() {
 
 document.addEventListener("keydown", keyPressListener);
 document.addEventListener("keyup", keyReleaseListener);
-mapHandler.loadMap(0);
+loadMap(0);
