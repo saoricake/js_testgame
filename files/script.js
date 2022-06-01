@@ -31,63 +31,8 @@ const colors = {
 	walls: "#FFFFFF"
 }
 
-const maps = {
-	currentMap: "map1",
-	loadedMap: {
-		boxes: [],
-		walls: []
-	},
-	loadMap: function(map) {
-		loadCanvas.screen.clearRect(0, 0, loadCanvas.width, loadCanvas.height);
-		playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
-		mapCanvas.screen.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
-
-		loadCanvas.screen.fillStyle = colors.player;
-		loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
-
-		loadCanvas.screen.fillStyle = colors.boxes;
-		loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
-
-		loadCanvas.screen.fillStyle = colors.walls;
-		loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
-
-		player.x = this[map].player.x * game.tileSize;
-		player.y = this[map].player.y * game.tileSize;
-
-		playCanvas.screen.drawImage(
-			loadCanvas,
-			game.tileSize * 0, 0, game.tileSize, game.tileSize,
-			player.x, player.y, game.tileSize, game.tileSize
-		);
-
-		this.loadedMap.boxes = [];
-		this[map].boxes.forEach((box) => {
-			let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
-			this.loadedMap.boxes.push(loadedBox);
-
-			playCanvas.screen.drawImage(
-				loadCanvas,
-				game.tileSize * 1, 0, game.tileSize, game.tileSize,
-				loadedBox.x, loadedBox.y, game.tileSize, game.tileSize
-			);
-		});
-
-		this.loadedMap.walls = [];
-		this[map].walls.forEach((wall) => {
-			let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
-			this.loadedMap.walls.push(loadedWall);
-
-			mapCanvas.screen.drawImage(
-				loadCanvas,
-				game.tileSize * 2, 0, game.tileSize, game.tileSize,
-				loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
-			);
-		});
-
-		this.currentMap = map;
-		setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
-	},
-	map1: {
+const mapData = [
+	{
 		player: {
 			x: 0, y: 0
 		},
@@ -111,7 +56,7 @@ const maps = {
 			{x: 8, y: 7}
 		]
 	},
-	map2: {
+	{
 		player: {
 			x: 7, y: 0
 		},
@@ -124,6 +69,62 @@ const maps = {
 			{x: 1, y: 7},
 			{x: 8, y: 7}
 		]
+	}
+];
+
+const mapHandler = {
+	loadedMap: {
+		boxes: [],
+		walls: []
+	},
+	loadMap: function(map) {
+		loadCanvas.screen.clearRect(0, 0, loadCanvas.width, loadCanvas.height);
+		playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
+		mapCanvas.screen.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+
+		loadCanvas.screen.fillStyle = colors.player;
+		loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
+
+		loadCanvas.screen.fillStyle = colors.boxes;
+		loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
+
+		loadCanvas.screen.fillStyle = colors.walls;
+		loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
+
+		player.x = mapData[map].player.x * game.tileSize;
+		player.y = mapData[map].player.y * game.tileSize;
+
+		playCanvas.screen.drawImage(
+			loadCanvas,
+			game.tileSize * 0, 0, game.tileSize, game.tileSize,
+			player.x, player.y, game.tileSize, game.tileSize
+		);
+
+		this.loadedMap.boxes = [];
+		mapData[map].boxes.forEach((box) => {
+			let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
+			this.loadedMap.boxes.push(loadedBox);
+
+			playCanvas.screen.drawImage(
+				loadCanvas,
+				game.tileSize * 1, 0, game.tileSize, game.tileSize,
+				loadedBox.x, loadedBox.y, game.tileSize, game.tileSize
+			);
+		});
+
+		this.loadedMap.walls = [];
+		mapData[map].walls.forEach((wall) => {
+			let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
+			this.loadedMap.walls.push(loadedWall);
+
+			mapCanvas.screen.drawImage(
+				loadCanvas,
+				game.tileSize * 2, 0, game.tileSize, game.tileSize,
+				loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
+			);
+		});
+
+		setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
 	}
 };
 
@@ -206,7 +207,7 @@ function movement() {
 		}
 
 		function detectWall() {
-			return maps.loadedMap.walls.some((wall) => {
+			return mapHandler.loadedMap.walls.some((wall) => {
 				let alignedWithWall;
 				let adjacentToWall;
 
@@ -223,7 +224,7 @@ function movement() {
 		}
 
 		function detectBox() {
-			return maps.loadedMap.boxes.some((box) => {
+			return mapHandler.loadedMap.boxes.some((box) => {
 				let perfectlyAlignedWithBox;
 				let alignedWithBox;
 				let adjacentToBox;
@@ -293,7 +294,7 @@ function draw() {
 		game.tileSize * 0, 0, game.tileSize, game.tileSize,
 		player.x, player.y, game.tileSize, game.tileSize
 	);
-	maps.loadedMap.boxes.forEach((box) => {
+	mapHandler.loadedMap.boxes.forEach((box) => {
 		playCanvas.screen.drawImage(
 			loadCanvas,
 			game.tileSize * 1, 0, game.tileSize, game.tileSize,
@@ -312,4 +313,4 @@ function update() {
 
 document.addEventListener("keydown", keyPressListener);
 document.addEventListener("keyup", keyReleaseListener);
-maps.loadMap("map1");
+mapHandler.loadMap(0);
