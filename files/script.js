@@ -160,8 +160,6 @@ function movement() {
 		y: 0
 	}
 
-	let boxToMove;
-
 	switch (Math.max(0, inputs.up, inputs.down)) {
 		case 0: break;
 		case inputs.up:
@@ -182,6 +180,8 @@ function movement() {
 			break;
 	}
 
+	let boxToMove;
+
 	function detectCollision(subject, mainAxis) {
 		let canvasLimit;
 		let sideAxis;
@@ -197,53 +197,49 @@ function movement() {
 				break;
 		}
 
-		function detectOOB() {
-			return subject[mainAxis] + game.tileSize * Math.max(0, move[mainAxis]) === canvasLimit * Math.max(0, move[mainAxis]);
+		let sbjSide0 = subject[sideAxis];
+		let sbjSide1 = subject[sideAxis] + game.tileSize;
+
+		function detectBox() {
+			return loadedData.boxes.some((box) => {
+				let boxSide0 = box[sideAxis];
+				let boxSide1 = box[sideAxis] + game.tileSize;
+
+				if (subject[mainAxis] + game.tileSize * move[mainAxis] === box[mainAxis]) {}
+				else return false;
+
+				if ((sbjSide0 >= boxSide0 && sbjSide0 < boxSide1) || (sbjSide1 > boxSide0 && sbjSide1 <= boxSide1)) {}
+				else return false;
+
+				if (sbjSide0 === boxSide0 && sbjSide1 === boxSide1) {
+					if (subject === loadedData.player && move[sideAxis] === 0) {
+						boxToMove = box;
+						return false;
+					} else return true;
+				}
+
+				return true;
+			});
 		}
 
 		function detectWall() {
 			return loadedData.walls.some((wall) => {
-				let alignedWithWall;
-				let adjacentToWall;
+				let wallSide0 = wall[sideAxis];
+				let wallSide1 = wall[sideAxis] + game.tileSize;
 
-				if (
-					(subject[sideAxis] === wall[sideAxis] || subject[sideAxis] + game.tileSize === wall[sideAxis] + game.tileSize)
-					|| (subject[sideAxis] > wall[sideAxis] && subject[sideAxis] < wall[sideAxis] + game.tileSize)
-					|| (subject[sideAxis] + game.tileSize > wall[sideAxis] && subject[sideAxis] + game.tileSize < wall[sideAxis] + game.tileSize)
-				) alignedWithWall = true;
+				if (subject[mainAxis] + game.tileSize * move[mainAxis] === wall[mainAxis]) {}
+				else return false;
 
-				if (subject[mainAxis] + game.tileSize * move[mainAxis] === wall[mainAxis]) adjacentToWall = true;
-
-				return alignedWithWall && adjacentToWall;
+				if ((sbjSide0 >= wallSide0 && sbjSide0 < wallSide1) || (sbjSide1 > wallSide0 && sbjSide1 <= wallSide1)) return true;
+				else return false;
 			});
 		}
 
-		function detectBox() {
-			return loadedData.boxes.some((box) => {
-				let perfectlyAlignedWithBox;
-				let alignedWithBox;
-				let adjacentToBox;
-	
-				if (subject[sideAxis] === box[sideAxis] || subject[sideAxis] + game.tileSize === box[sideAxis] + game.tileSize) perfectlyAlignedWithBox = true;
-				if (
-					(subject[sideAxis] > box[sideAxis] && subject[sideAxis] < box[sideAxis] + game.tileSize)
-					|| (subject[sideAxis] + game.tileSize > box[sideAxis] && subject[sideAxis] + game.tileSize < box[sideAxis] + game.tileSize)
-				) alignedWithBox = true;
-	
-				if (subject[mainAxis] + game.tileSize * move[mainAxis] === box[mainAxis]) adjacentToBox = true;
-	
-				if (perfectlyAlignedWithBox && adjacentToBox) {
-					if (subject === loadedData.player && ((move.x !== 0 && move.y === 0) || (move.x === 0 && move.y !== 0))) {
-						boxToMove = box;
-						return false;
-					}
-					else return true;
-				}
-				return alignedWithBox && adjacentToBox;
-			});
+		function detectOOB() {
+			return subject[mainAxis] + game.tileSize * Math.max(0, move[mainAxis]) === canvasLimit * Math.max(0, move[mainAxis]);
 		}
 
-		return detectOOB() || detectWall() || detectBox();
+		return detectBox() || detectWall() || detectOOB();
 	}
 
 	function movePlayer() {
@@ -259,6 +255,7 @@ function movement() {
 			}
 			else loadedData.player.x += game.moveDistance * move.x;
 		}
+
 		if (canMoveY && !detectCollision(loadedData.player, "y")) {
 			if (boxToMove) {
 				if (!detectCollision(boxToMove, "y")) {
@@ -268,6 +265,7 @@ function movement() {
 			}
 			else loadedData.player.y += game.moveDistance * move.y;
 		}
+
 		if (canMoveX || canMoveY) inputs.lastMove = currentTime;
 	}
 
