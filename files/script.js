@@ -182,7 +182,7 @@ function movement() {
 
 	let boxToMove;
 
-	function detectCollision(subject, mainAxis) {
+	function detectObstacle(subject, mainAxis) {
 		let canvasLimit;
 		let sideAxis;
 
@@ -197,23 +197,23 @@ function movement() {
 				break;
 		}
 
-		let sbjSide0 = subject[sideAxis];
-		let sbjSide1 = subject[sideAxis] + game.tileSize;
+		let sbjSideStart = subject[sideAxis];
+		let sbjSideEnd = subject[sideAxis] + game.tileSize;
 
-		function detectBox() {
-			return loadedData.boxes.some((box) => {
-				let boxSide0 = box[sideAxis];
-				let boxSide1 = box[sideAxis] + game.tileSize;
+		function detectDynamicObstacle() {
+			return loadedData.boxes.some((obs) => {
+				let obsSideStart = obs[sideAxis];
+				let obsSideEnd = obs[sideAxis] + game.tileSize;
 
-				if (subject[mainAxis] + game.tileSize * move[mainAxis] === box[mainAxis]) {}
+				if (subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis]) {}
 				else return false;
 
-				if ((sbjSide0 >= boxSide0 && sbjSide0 < boxSide1) || (sbjSide1 > boxSide0 && sbjSide1 <= boxSide1)) {}
+				if ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd)) {}
 				else return false;
 
-				if (sbjSide0 === boxSide0 && sbjSide1 === boxSide1) {
+				if (sbjSideStart === obsSideStart && sbjSideEnd === obsSideEnd) {
 					if (subject === loadedData.player && move[sideAxis] === 0) {
-						boxToMove = box;
+						boxToMove = obs;
 						return false;
 					} else return true;
 				}
@@ -222,15 +222,15 @@ function movement() {
 			});
 		}
 
-		function detectWall() {
-			return loadedData.walls.some((wall) => {
-				let wallSide0 = wall[sideAxis];
-				let wallSide1 = wall[sideAxis] + game.tileSize;
+		function detectStaticObstacle() {
+			return loadedData.walls.some((obs) => {
+				let obsSideStart = obs[sideAxis];
+				let obsSideEnd = obs[sideAxis] + game.tileSize;
 
-				if (subject[mainAxis] + game.tileSize * move[mainAxis] === wall[mainAxis]) {}
+				if (subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis]) {}
 				else return false;
 
-				if ((sbjSide0 >= wallSide0 && sbjSide0 < wallSide1) || (sbjSide1 > wallSide0 && sbjSide1 <= wallSide1)) return true;
+				if ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd)) return true;
 				else return false;
 			});
 		}
@@ -239,16 +239,16 @@ function movement() {
 			return subject[mainAxis] + game.tileSize * Math.max(0, move[mainAxis]) === canvasLimit * Math.max(0, move[mainAxis]);
 		}
 
-		return detectBox() || detectWall() || detectOOB();
+		return detectDynamicObstacle() || detectStaticObstacle() || detectOOB();
 	}
 
 	function movePlayer() {
-		let canMoveX = (move.x !== 0 && !detectCollision(loadedData.player, "x"));
-		let canMoveY = (move.y !== 0 && !detectCollision(loadedData.player, "y"));
+		let canMoveX = (move.x !== 0 && !detectObstacle(loadedData.player, "x"));
+		let canMoveY = (move.y !== 0 && !detectObstacle(loadedData.player, "y"));
 
 		if (canMoveX) {
 			if (boxToMove) {
-				if (!detectCollision(boxToMove, "x")) {
+				if (!detectObstacle(boxToMove, "x")) {
 					boxToMove.x += game.moveDistance * move.x;
 					loadedData.player.x += game.moveDistance * move.x;
 				}
@@ -256,9 +256,9 @@ function movement() {
 			else loadedData.player.x += game.moveDistance * move.x;
 		}
 
-		if (canMoveY && !detectCollision(loadedData.player, "y")) {
+		if (canMoveY && !detectObstacle(loadedData.player, "y")) {
 			if (boxToMove) {
-				if (!detectCollision(boxToMove, "y")) {
+				if (!detectObstacle(boxToMove, "y")) {
 					boxToMove.y += game.moveDistance * move.y;
 					loadedData.player.y += game.moveDistance * move.y;
 				}
