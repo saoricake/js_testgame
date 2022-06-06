@@ -85,7 +85,11 @@ const mapData = [
 	}
 ];
 
-function loadMap(mapIndex) {
+function loadMap(inputId) {
+	let mapId = 0;
+
+	if (mapData[inputId]) mapId = inputId;
+
 	canvas0.screen.clearRect(0, 0, canvas0.width, canvas0.height);
 	canvas1.screen.clearRect(0, 0, canvas1.width, canvas1.height);
 	canvas2.screen.clearRect(0, 0, canvas2.width, canvas2.height);
@@ -103,7 +107,7 @@ function loadMap(mapIndex) {
 	canvas0.screen.fillRect(game.tileSize * 3, 0, game.tileSize, game.tileSize);
 
 	loadedData.walls = [];
-	mapData[mapIndex].walls.forEach((wall) => {
+	mapData[mapId].walls.forEach((wall) => {
 		let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
 		loadedData.walls.push(loadedWall);
 
@@ -115,7 +119,7 @@ function loadMap(mapIndex) {
 	});
 
 	loadedData.goals = [];
-	mapData[mapIndex].goals.forEach((goal) => {
+	mapData[mapId].goals.forEach((goal) => {
 		let loadedGoal = {x: goal.x * game.tileSize, y: goal.y * game.tileSize}
 		loadedData.goals.push(loadedGoal);
 
@@ -126,8 +130,8 @@ function loadMap(mapIndex) {
 		);
 	});
 
-	loadedData.player.x = mapData[mapIndex].player.x * game.tileSize;
-	loadedData.player.y = mapData[mapIndex].player.y * game.tileSize;
+	loadedData.player.x = mapData[mapId].player.x * game.tileSize;
+	loadedData.player.y = mapData[mapId].player.y * game.tileSize;
 	canvas2.screen.drawImage(
 		canvas0,
 		game.tileSize * 0, 0, game.tileSize, game.tileSize,
@@ -135,7 +139,7 @@ function loadMap(mapIndex) {
 	);
 
 	loadedData.boxes = [];
-	mapData[mapIndex].boxes.forEach((box) => {
+	mapData[mapId].boxes.forEach((box) => {
 		let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
 		loadedData.boxes.push(loadedBox);
 
@@ -146,7 +150,7 @@ function loadMap(mapIndex) {
 		);
 	});
 
-	loadedData.id = mapIndex;
+	loadedData.id = mapId;
 	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
 }
 
@@ -337,8 +341,7 @@ function update() {
 	draw();
 
 	if (checkGoals() === false) setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
-	else if (mapData[loadedData.id + 1]) loadMap(loadedData.id + 1);
-	else loadMap(0);
+	else loadMap(loadedData.id + 1);
 }
 
 document.addEventListener("keydown", keyPressListener);
