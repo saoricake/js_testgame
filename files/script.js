@@ -23,13 +23,16 @@ const game = {
 const colors = {
 	player: "#FF0000",
 	boxes: "#888888",
-	walls: "#FFFFFF"
+	walls: "#FFFFFF",
+	goals: "#00FF00"
 }
 
 const loadedData = {
+	id: 0,
 	player: {x:0,y:0},
 	boxes: [],
-	walls: []
+	walls: [],
+	goals: []
 }
 
 const mapData = [
@@ -55,6 +58,10 @@ const mapData = [
 			{x: 2, y: 7},
 			{x: 7, y: 7},
 			{x: 8, y: 7}
+		],
+		goals: [
+			{x: 7, y: 2},
+			{x: 7, y: 6}
 		]
 	},
 	{
@@ -62,13 +69,18 @@ const mapData = [
 			x: 7, y: 0
 		},
 		boxes: [
-			{x: 4, y: 4}
+			{x: 4, y: 4},
+			{x: 8, y: 4}
 		],
 		walls: [
 			{x: 1, y: 1},
 			{x: 8, y: 1},
 			{x: 1, y: 7},
 			{x: 8, y: 7}
+		],
+		goals: [
+			{x: 2, y: 2},
+			{x: 2, y: 6}
 		]
 	}
 ];
@@ -87,6 +99,9 @@ function loadMap(mapIndex) {
 	canvas0.screen.fillStyle = colors.walls;
 	canvas0.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
 
+	canvas0.screen.fillStyle = colors.goals;
+	canvas0.screen.fillRect(game.tileSize * 3, 0, game.tileSize, game.tileSize);
+
 	loadedData.walls = [];
 	mapData[mapIndex].walls.forEach((wall) => {
 		let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
@@ -96,6 +111,18 @@ function loadMap(mapIndex) {
 			canvas0,
 			game.tileSize * 2, 0, game.tileSize, game.tileSize,
 			loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
+		);
+	});
+
+	loadedData.goals = [];
+	mapData[mapIndex].goals.forEach((goal) => {
+		let loadedGoal = {x: goal.x * game.tileSize, y: goal.y * game.tileSize}
+		loadedData.goals.push(loadedGoal);
+
+		canvas1.screen.drawImage(
+			canvas0,
+			game.tileSize * 3, 0, game.tileSize, game.tileSize,
+			loadedGoal.x, loadedGoal.y, game.tileSize, game.tileSize
 		);
 	});
 
@@ -119,6 +146,7 @@ function loadMap(mapIndex) {
 		);
 	});
 
+	loadedData.id = mapIndex;
 	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
 }
 
@@ -295,12 +323,22 @@ function draw() {
 	});
 }
 
-function update() {
-	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
+function checkGoals() {
+	return loadedData.goals.every((goal) => {
+		return loadedData.boxes.some((box) => {
+			return goal.x === box.x && goal.y === box.y;
+		});
+	});
+}
 
+function update() {
 	canvas2.screen.clearRect(0, 0, canvas2.width, canvas2.height);
 	movement();
 	draw();
+
+	if (checkGoals() === false) setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
+	else if (mapData[loadedData.id + 1]) loadMap(loadedData.id + 1);
+	else loadMap(0);
 }
 
 document.addEventListener("keydown", keyPressListener);
