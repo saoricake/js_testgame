@@ -1,23 +1,23 @@
-const playCanvas = document.getElementById("playCanvas");
-playCanvas.screen = playCanvas.getContext("2d");
-playCanvas.width = 320;
-playCanvas.height = 288;
+const canvas0 = document.createElement("canvas");
+canvas0.screen = canvas0.getContext("2d");
+canvas0.width = 320;
+canvas0.height = 32;
 
-const mapCanvas = document.getElementById("mapCanvas");
-mapCanvas.screen = mapCanvas.getContext("2d");
-mapCanvas.width = 320;
-mapCanvas.height = 288;
+const canvas1 = document.getElementById("canvasLayer1");
+canvas1.screen = canvas1.getContext("2d");
+canvas1.width = 320;
+canvas1.height = 288;
 
-const loadCanvas = document.createElement("canvas");
-loadCanvas.screen = loadCanvas.getContext("2d");
-loadCanvas.width = 320;
-loadCanvas.height = 32;
+const canvas2 = document.getElementById("canvasLayer2");
+canvas2.screen = canvas2.getContext("2d");
+canvas2.width = 320;
+canvas2.height = 288;
 
 const game = {
 	tileSize: 32,
 	frameRate: 1000 / 60,
 	moveSpeed: 1000 / 10,
-	moveDistance: 16
+	moveDist: 16
 }
 
 const colors = {
@@ -74,24 +74,35 @@ const mapData = [
 ];
 
 function loadMap(mapIndex) {
-	loadCanvas.screen.clearRect(0, 0, loadCanvas.width, loadCanvas.height);
-	playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
-	mapCanvas.screen.clearRect(0, 0, mapCanvas.width, mapCanvas.height);
+	canvas0.screen.clearRect(0, 0, canvas0.width, canvas0.height);
+	canvas1.screen.clearRect(0, 0, canvas1.width, canvas1.height);
+	canvas2.screen.clearRect(0, 0, canvas2.width, canvas2.height);
 
-	loadCanvas.screen.fillStyle = colors.player;
-	loadCanvas.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
+	canvas0.screen.fillStyle = colors.player;
+	canvas0.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
 
-	loadCanvas.screen.fillStyle = colors.boxes;
-	loadCanvas.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
+	canvas0.screen.fillStyle = colors.boxes;
+	canvas0.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
 
-	loadCanvas.screen.fillStyle = colors.walls;
-	loadCanvas.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
+	canvas0.screen.fillStyle = colors.walls;
+	canvas0.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
+
+	loadedData.walls = [];
+	mapData[mapIndex].walls.forEach((wall) => {
+		let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
+		loadedData.walls.push(loadedWall);
+
+		canvas1.screen.drawImage(
+			canvas0,
+			game.tileSize * 2, 0, game.tileSize, game.tileSize,
+			loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
+		);
+	});
 
 	loadedData.player.x = mapData[mapIndex].player.x * game.tileSize;
 	loadedData.player.y = mapData[mapIndex].player.y * game.tileSize;
-
-	playCanvas.screen.drawImage(
-		loadCanvas,
+	canvas2.screen.drawImage(
+		canvas0,
 		game.tileSize * 0, 0, game.tileSize, game.tileSize,
 		loadedData.player.x, loadedData.player.y, game.tileSize, game.tileSize
 	);
@@ -101,22 +112,10 @@ function loadMap(mapIndex) {
 		let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
 		loadedData.boxes.push(loadedBox);
 
-		playCanvas.screen.drawImage(
-			loadCanvas,
+		canvas2.screen.drawImage(
+			canvas0,
 			game.tileSize * 1, 0, game.tileSize, game.tileSize,
 			loadedBox.x, loadedBox.y, game.tileSize, game.tileSize
-		);
-	});
-
-	loadedData.walls = [];
-	mapData[mapIndex].walls.forEach((wall) => {
-		let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
-		loadedData.walls.push(loadedWall);
-
-		mapCanvas.screen.drawImage(
-			loadCanvas,
-			game.tileSize * 2, 0, game.tileSize, game.tileSize,
-			loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
 		);
 	});
 
@@ -188,11 +187,11 @@ function movement() {
 
 		switch (mainAxis) {
 			case "x":
-				canvasLimit = playCanvas.width;
+				canvasLimit = canvas2.width;
 				sideAxis = "y";
 				break;
 			case "y":
-				canvasLimit = playCanvas.height;
+				canvasLimit = canvas2.height;
 				sideAxis = "x";
 				break;
 		}
@@ -249,21 +248,21 @@ function movement() {
 		if (canMoveX) {
 			if (boxToMove) {
 				if (!detectObstacle(boxToMove, "x")) {
-					boxToMove.x += game.moveDistance * move.x;
-					loadedData.player.x += game.moveDistance * move.x;
+					boxToMove.x += game.moveDist * move.x;
+					loadedData.player.x += game.moveDist * move.x;
 				}
 			}
-			else loadedData.player.x += game.moveDistance * move.x;
+			else loadedData.player.x += game.moveDist * move.x;
 		}
 
 		if (canMoveY && !detectObstacle(loadedData.player, "y")) {
 			if (boxToMove) {
 				if (!detectObstacle(boxToMove, "y")) {
-					boxToMove.y += game.moveDistance * move.y;
-					loadedData.player.y += game.moveDistance * move.y;
+					boxToMove.y += game.moveDist * move.y;
+					loadedData.player.y += game.moveDist * move.y;
 				}
 			}
-			else loadedData.player.y += game.moveDistance * move.y;
+			else loadedData.player.y += game.moveDist * move.y;
 		}
 
 		if (canMoveX || canMoveY) inputs.lastMove = currentTime;
@@ -282,14 +281,14 @@ function movement() {
 }
 
 function draw() {
-	playCanvas.screen.drawImage(
-		loadCanvas,
+	canvas2.screen.drawImage(
+		canvas0,
 		game.tileSize * 0, 0, game.tileSize, game.tileSize,
 		loadedData.player.x, loadedData.player.y, game.tileSize, game.tileSize
 	);
 	loadedData.boxes.forEach((box) => {
-		playCanvas.screen.drawImage(
-			loadCanvas,
+		canvas2.screen.drawImage(
+			canvas0,
 			game.tileSize * 1, 0, game.tileSize, game.tileSize,
 			box.x, box.y, game.tileSize, game.tileSize
 		);
@@ -299,7 +298,7 @@ function draw() {
 function update() {
 	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
 
-	playCanvas.screen.clearRect(0, 0, playCanvas.width, playCanvas.height);
+	canvas2.screen.clearRect(0, 0, canvas2.width, canvas2.height);
 	movement();
 	draw();
 }
