@@ -1,17 +1,24 @@
-const canvas0 = document.createElement("canvas");
-canvas0.screen = canvas0.getContext("2d");
-canvas0.width = 320;
-canvas0.height = 32;
+class Canvas {
+	constructor(canvasElement) {
+		this.ele = canvasElement;
+		this.ele.width = 320;
+		this.ele.height = 288;
+		this.screen = this.ele.getContext("2d");
+	}
 
-const canvas1 = document.getElementById("canvasLayer1");
-canvas1.screen = canvas1.getContext("2d");
-canvas1.width = 320;
-canvas1.height = 288;
+	clear() {
+		this.screen.clearRect(0, 0, this.ele.width, this.ele.height);
+	}
+}
 
-const canvas2 = document.getElementById("canvasLayer2");
-canvas2.screen = canvas2.getContext("2d");
-canvas2.width = 320;
-canvas2.height = 288;
+const canvas0 = new Canvas(document.createElement("canvas"));
+const canvas1 = new Canvas(document.getElementById("canvasLayer1"));
+const canvas2 = new Canvas(document.getElementById("canvasLayer2"));
+
+canvas0.loadSprite = function(color, tile) {
+	this.screen.fillStyle = color;
+	this.screen.fillRect(game.tileSize * tile, 0, game.tileSize, game.tileSize);
+}
 
 const game = {
 	tileSize: 32,
@@ -24,21 +31,21 @@ const colors = {
 	player: "#FF0000",
 	boxes: "#888888",
 	walls: "#FFFFFF",
-	goals: "#00FF00"
+	buttons: "#00FF00"
 }
 
 const loadedData = {
 	id: 0,
-	player: {x:0,y:0},
+	player: {},
 	boxes: [],
 	walls: [],
-	goals: []
+	buttons: []
 }
 
 const mapData = [
 	{
 		player: {
-			x: 0, y: 0
+			x: 4, y: 0
 		},
 		boxes: [
 			{x: 3, y: 3},
@@ -59,7 +66,7 @@ const mapData = [
 			{x: 7, y: 7},
 			{x: 8, y: 7}
 		],
-		goals: [
+		buttons: [
 			{x: 7, y: 2},
 			{x: 7, y: 6}
 		]
@@ -78,79 +85,76 @@ const mapData = [
 			{x: 1, y: 7},
 			{x: 8, y: 7}
 		],
-		goals: [
+		buttons: [
 			{x: 2, y: 2},
 			{x: 2, y: 6}
 		]
 	}
 ];
 
+class GameObject {
+	static targetCanvas = canvas0;
+	static tileId = 0;
+
+	constructor(objMapData) {
+		this.x = objMapData.x * game.tileSize;
+		this.y = objMapData.y * game.tileSize;
+		this.draw();
+	}
+
+	draw() {
+		this.constructor.targetCanvas.screen.drawImage(
+			canvas0.ele,
+			game.tileSize * this.constructor.tileId, 0, game.tileSize, game.tileSize,
+			this.x, this.y, game.tileSize, game.tileSize
+		);
+	}
+}
+
+class Player extends GameObject {
+	static targetCanvas = canvas2;
+	static tileId = 0;
+}
+
+class Wall extends GameObject {
+	static targetCanvas = canvas1;
+	static tileId = 1;
+}
+
+class Box extends GameObject {
+	static targetCanvas = canvas2;
+	static tileId = 2;
+}
+
+class Button extends GameObject {
+	static targetCanvas = canvas1;
+	static tileId = 3;
+
+	checkPressed() {
+		return loadedData.boxes.some(box => this.x === box.x && this.y === box.y);
+	}
+}
+
 function loadMap(inputId) {
 	let mapId = 0;
 
 	if (mapData[inputId]) mapId = inputId;
 
-	canvas0.screen.clearRect(0, 0, canvas0.width, canvas0.height);
-	canvas1.screen.clearRect(0, 0, canvas1.width, canvas1.height);
-	canvas2.screen.clearRect(0, 0, canvas2.width, canvas2.height);
+	canvas0.clear();
+	canvas1.clear();
+	canvas2.clear();
 
-	canvas0.screen.fillStyle = colors.player;
-	canvas0.screen.fillRect(game.tileSize * 0, 0, game.tileSize, game.tileSize);
-
-	canvas0.screen.fillStyle = colors.boxes;
-	canvas0.screen.fillRect(game.tileSize * 1, 0, game.tileSize, game.tileSize);
-
-	canvas0.screen.fillStyle = colors.walls;
-	canvas0.screen.fillRect(game.tileSize * 2, 0, game.tileSize, game.tileSize);
-
-	canvas0.screen.fillStyle = colors.goals;
-	canvas0.screen.fillRect(game.tileSize * 3, 0, game.tileSize, game.tileSize);
-
-	loadedData.walls = [];
-	mapData[mapId].walls.forEach((wall) => {
-		let loadedWall = {x: wall.x * game.tileSize, y: wall.y * game.tileSize}
-		loadedData.walls.push(loadedWall);
-
-		canvas1.screen.drawImage(
-			canvas0,
-			game.tileSize * 2, 0, game.tileSize, game.tileSize,
-			loadedWall.x, loadedWall.y, game.tileSize, game.tileSize
-		);
-	});
-
-	loadedData.goals = [];
-	mapData[mapId].goals.forEach((goal) => {
-		let loadedGoal = {x: goal.x * game.tileSize, y: goal.y * game.tileSize}
-		loadedData.goals.push(loadedGoal);
-
-		canvas1.screen.drawImage(
-			canvas0,
-			game.tileSize * 3, 0, game.tileSize, game.tileSize,
-			loadedGoal.x, loadedGoal.y, game.tileSize, game.tileSize
-		);
-	});
-
-	loadedData.player.x = mapData[mapId].player.x * game.tileSize;
-	loadedData.player.y = mapData[mapId].player.y * game.tileSize;
-	canvas2.screen.drawImage(
-		canvas0,
-		game.tileSize * 0, 0, game.tileSize, game.tileSize,
-		loadedData.player.x, loadedData.player.y, game.tileSize, game.tileSize
-	);
-
-	loadedData.boxes = [];
-	mapData[mapId].boxes.forEach((box) => {
-		let loadedBox = {x: box.x * game.tileSize, y: box.y * game.tileSize}
-		loadedData.boxes.push(loadedBox);
-
-		canvas2.screen.drawImage(
-			canvas0,
-			game.tileSize * 1, 0, game.tileSize, game.tileSize,
-			loadedBox.x, loadedBox.y, game.tileSize, game.tileSize
-		);
-	});
+	canvas0.loadSprite(colors.player, 0);
+	canvas0.loadSprite(colors.walls, 1);
+	canvas0.loadSprite(colors.boxes, 2);
+	canvas0.loadSprite(colors.buttons, 3);
 
 	loadedData.id = mapId;
+	loadedData.player = new Player(mapData[mapId].player);
+	loadedData.walls = mapData[mapId].walls.map(wall => new Wall(wall));
+	loadedData.boxes = mapData[mapId].boxes.map(box => new Box(box));
+	loadedData.buttons = mapData[mapId].buttons.map(button => new Button(button));
+
 	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
 }
 
@@ -219,11 +223,11 @@ function movement() {
 
 		switch (mainAxis) {
 			case "x":
-				canvasLimit = canvas2.width;
+				canvasLimit = canvas2.ele.width;
 				sideAxis = "y";
 				break;
 			case "y":
-				canvasLimit = canvas2.height;
+				canvasLimit = canvas2.ele.height;
 				sideAxis = "x";
 				break;
 		}
@@ -313,35 +317,21 @@ function movement() {
 }
 
 function draw() {
-	canvas2.screen.drawImage(
-		canvas0,
-		game.tileSize * 0, 0, game.tileSize, game.tileSize,
-		loadedData.player.x, loadedData.player.y, game.tileSize, game.tileSize
-	);
-	loadedData.boxes.forEach((box) => {
-		canvas2.screen.drawImage(
-			canvas0,
-			game.tileSize * 1, 0, game.tileSize, game.tileSize,
-			box.x, box.y, game.tileSize, game.tileSize
-		);
-	});
+	loadedData.player.draw();
+	loadedData.boxes.forEach(box => box.draw());
 }
 
-function checkGoals() {
-	return loadedData.goals.every((goal) => {
-		return loadedData.boxes.some((box) => {
-			return goal.x === box.x && goal.y === box.y;
-		});
-	});
+function checkButtons() {
+	return loadedData.buttons.every(button => button.checkPressed());
 }
 
 function update() {
-	canvas2.screen.clearRect(0, 0, canvas2.width, canvas2.height);
+	canvas2.clear();
 	movement();
 	draw();
 
-	if (checkGoals() === false) setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
-	else loadMap(loadedData.id + 1);
+	if (checkButtons() === false) setTimeout(() => window.requestAnimationFrame(update), game.frameRate);
+	else setTimeout(() => loadMap(loadedData.id + 1), 1000);
 }
 
 document.addEventListener("keydown", keyPressListener);
