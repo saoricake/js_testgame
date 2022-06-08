@@ -119,7 +119,7 @@ class Wall extends GameObject {
 
 class Box extends GameObject {
 	static targetCanvas = canvas2;
-	static color = "#888888";
+	static color = "#8B4513";
 	static tileId = 2;
 }
 
