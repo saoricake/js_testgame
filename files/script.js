@@ -86,7 +86,10 @@ class GameObject {
 	static tileId = 0;
 	static loadSprite() {
 		canvas0.ctx.fillStyle = this.color;
-		canvas0.ctx.fillRect(game.tileSize * this.tileId, 0, game.tileSize, game.tileSize);
+		canvas0.ctx.fillRect(
+			game.tileSize * this.tileId, 0, // the X and Y coordinates of the top-left corner of the rectangle
+			game.tileSize, game.tileSize // the X and Y lengths of the rectangle
+		);
 	}
 
 	constructor(objMapData) {
@@ -128,9 +131,12 @@ class Button extends GameObject {
 	static tileId = 3;
 	static loadSprite() {
 		canvas0.ctx.fillStyle = this.color;
-		canvas0.ctx.beginPath()
-		canvas0.ctx.arc(game.tileSize * (this.tileId + 0.5), game.tileSize / 2, game.tileSize * 0.3125, 0, 2 * Math.PI);
-		canvas0.ctx.fill()
+		canvas0.ctx.beginPath();
+		canvas0.ctx.arc(
+			game.tileSize * (this.tileId + 0.5), game.tileSize / 2, // the X and Y coordinates of the center of the circle
+			game.tileSize * 0.3125, 0, 2 * Math.PI // the radius and starting/ending angles of the circle
+		);
+		canvas0.ctx.fill();
 	}
 
 	checkPressed() {
