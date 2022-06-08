@@ -3,11 +3,11 @@ class Canvas {
 		this.ele = canvasElement;
 		this.ele.width = 320;
 		this.ele.height = 288;
-		this.screen = this.ele.getContext("2d");
+		this.ctx = this.ele.getContext("2d");
 	}
 
 	clear() {
-		this.screen.clearRect(0, 0, this.ele.width, this.ele.height);
+		this.ctx.clearRect(0, 0, this.ele.width, this.ele.height);
 	}
 }
 
@@ -15,23 +15,16 @@ const canvas0 = new Canvas(document.createElement("canvas"));
 const canvas1 = new Canvas(document.getElementById("canvasLayer1"));
 const canvas2 = new Canvas(document.getElementById("canvasLayer2"));
 
-canvas0.loadSprite = function(color, tile) {
-	this.screen.fillStyle = color;
-	this.screen.fillRect(game.tileSize * tile, 0, game.tileSize, game.tileSize);
+canvas0.loadSprite = function(GameObjSubclass) {
+	this.ctx.fillStyle = GameObjSubclass.color;
+	this.ctx.fillRect(game.tileSize * GameObjSubclass.tileId, 0, game.tileSize, game.tileSize);
 }
 
 const game = {
 	tileSize: 32,
+	moveDist: 16,
 	frameRate: 1000 / 60,
-	moveSpeed: 1000 / 10,
-	moveDist: 16
-}
-
-const colors = {
-	player: "#FF0000",
-	boxes: "#888888",
-	walls: "#FFFFFF",
-	buttons: "#00FF00"
+	moveSpeed: 1000 / 10
 }
 
 const loadedData = {
@@ -94,6 +87,7 @@ const mapData = [
 
 class GameObject {
 	static targetCanvas = canvas0;
+	static color = "#000000";
 	static tileId = 0;
 
 	constructor(objMapData) {
@@ -103,7 +97,7 @@ class GameObject {
 	}
 
 	draw() {
-		this.constructor.targetCanvas.screen.drawImage(
+		this.constructor.targetCanvas.ctx.drawImage(
 			canvas0.ele,
 			game.tileSize * this.constructor.tileId, 0, game.tileSize, game.tileSize,
 			this.x, this.y, game.tileSize, game.tileSize
@@ -113,21 +107,25 @@ class GameObject {
 
 class Player extends GameObject {
 	static targetCanvas = canvas2;
+	static color = "#FF0000";
 	static tileId = 0;
 }
 
 class Wall extends GameObject {
 	static targetCanvas = canvas1;
+	static color = "#FFFFFF";
 	static tileId = 1;
 }
 
 class Box extends GameObject {
 	static targetCanvas = canvas2;
+	static color = "#888888";
 	static tileId = 2;
 }
 
 class Button extends GameObject {
 	static targetCanvas = canvas1;
+	static color = "#00FF00";
 	static tileId = 3;
 
 	checkPressed() {
@@ -144,10 +142,10 @@ function loadMap(inputId) {
 	canvas1.clear();
 	canvas2.clear();
 
-	canvas0.loadSprite(colors.player, 0);
-	canvas0.loadSprite(colors.walls, 1);
-	canvas0.loadSprite(colors.boxes, 2);
-	canvas0.loadSprite(colors.buttons, 3);
+	canvas0.loadSprite(Player);
+	canvas0.loadSprite(Wall);
+	canvas0.loadSprite(Box);
+	canvas0.loadSprite(Button);
 
 	loadedData.id = mapId;
 	loadedData.player = new Player(mapData[mapId].player);
