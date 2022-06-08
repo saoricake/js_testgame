@@ -124,8 +124,14 @@ class Box extends GameObject {
 
 class Button extends GameObject {
 	static targetCanvas = canvas1;
-	static color = "#00FF00";
+	static color = "#888888";
 	static tileId = 3;
+	static loadSprite() {
+		canvas0.ctx.fillStyle = this.color;
+		canvas0.ctx.beginPath()
+		canvas0.ctx.arc(game.tileSize * (this.tileId + 0.5), game.tileSize / 2, game.tileSize * 0.3125, 0, 2 * Math.PI);
+		canvas0.ctx.fill()
+	}
 
 	checkPressed() {
 		return loadedData.boxes.some(box => this.x === box.x && this.y === box.y);
