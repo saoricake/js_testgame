@@ -15,11 +15,6 @@ const canvas0 = new Canvas(document.createElement("canvas"));
 const canvas1 = new Canvas(document.getElementById("canvasLayer1"));
 const canvas2 = new Canvas(document.getElementById("canvasLayer2"));
 
-canvas0.loadSprite = function(GameObjSubclass) {
-	this.ctx.fillStyle = GameObjSubclass.color;
-	this.ctx.fillRect(game.tileSize * GameObjSubclass.tileId, 0, game.tileSize, game.tileSize);
-}
-
 const game = {
 	tileSize: 32,
 	moveDist: 16,
@@ -89,6 +84,10 @@ class GameObject {
 	static targetCanvas = canvas0;
 	static color = "#000000";
 	static tileId = 0;
+	static loadSprite() {
+		canvas0.ctx.fillStyle = this.color;
+		canvas0.ctx.fillRect(game.tileSize * this.tileId, 0, game.tileSize, game.tileSize);
+	}
 
 	constructor(objMapData) {
 		this.x = objMapData.x * game.tileSize;
@@ -142,10 +141,10 @@ function loadMap(inputId) {
 	canvas1.clear();
 	canvas2.clear();
 
-	canvas0.loadSprite(Player);
-	canvas0.loadSprite(Wall);
-	canvas0.loadSprite(Box);
-	canvas0.loadSprite(Button);
+	Player.loadSprite();
+	Wall.loadSprite();
+	Box.loadSprite();
+	Button.loadSprite();
 
 	loadedData.id = mapId;
 	loadedData.player = new Player(mapData[mapId].player);
