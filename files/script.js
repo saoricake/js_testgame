@@ -15,6 +15,8 @@ const canvas0 = new Canvas(document.createElement("canvas"));
 const canvas1 = new Canvas(document.getElementById("canvasLayer1"));
 const canvas2 = new Canvas(document.getElementById("canvasLayer2"));
 
+const currentMapText = document.getElementById("divCurrentMap");
+
 const game = {
 	tileSize: 32,
 	moveDist: 16,
@@ -164,7 +166,8 @@ function loadMap(inputId) {
 	loadedData.boxes = mapData[mapId].boxes.map(box => new Box(box));
 	loadedData.buttons = mapData[mapId].buttons.map(button => new Button(button));
 
-	setTimeout(() => {window.requestAnimationFrame(update);}, game.frameRate);
+	currentMapText.innerText = `level ${loadedData.id + 1}`;
+	window.requestAnimationFrame(update);
 }
 
 const controller = {
@@ -340,7 +343,10 @@ function update() {
 	draw();
 
 	if (checkButtons() === false) setTimeout(() => window.requestAnimationFrame(update), game.frameRate);
-	else setTimeout(() => loadMap(loadedData.id + 1), 1000);
+	else {
+		currentMapText.innerText = `level ${loadedData.id + 1} complete`;
+		setTimeout(() => loadMap(loadedData.id + 1), 1000);
+	}
 }
 
 document.addEventListener("keydown", keyPressListener);
