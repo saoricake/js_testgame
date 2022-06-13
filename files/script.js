@@ -223,7 +223,7 @@ function movement() {
 			break;
 	}
 
-	let boxToMove;
+	let boxToMove = new Set();
 
 	function detectObstacle(subject, mainAxis) {
 		let canvasLimit;
@@ -248,20 +248,16 @@ function movement() {
 				let obsSideStart = obs[sideAxis];
 				let obsSideEnd = obs[sideAxis] + game.tileSize;
 
-				if (subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis]) {}
+				if (
+					(subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis])
+					&& ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd))
+				) {}
 				else return false;
 
-				if ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd)) {}
-				else return false;
-
-				if (sbjSideStart === obsSideStart && sbjSideEnd === obsSideEnd) {
-					if (subject === loadedData.player && move[sideAxis] === 0) {
-						boxToMove = obs;
-						return false;
-					} else return true;
-				}
-
-				return true;
+				if (subject === loadedData.player && move[sideAxis] === 0 && !detectObstacle(obs, mainAxis)) {
+					boxToMove.add(obs);
+					return false;
+				} else return true;
 			});
 		}
 
@@ -269,12 +265,11 @@ function movement() {
 			return loadedData.walls.some((obs) => {
 				let obsSideStart = obs[sideAxis];
 				let obsSideEnd = obs[sideAxis] + game.tileSize;
-
-				if (subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis]) {}
-				else return false;
-
-				if ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd)) return true;
-				else return false;
+				
+				return (
+					(subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis])
+					&& ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd))
+				);
 			});
 		}
 
@@ -290,21 +285,17 @@ function movement() {
 		let canMoveY = (move.y !== 0 && !detectObstacle(loadedData.player, "y"));
 
 		if (canMoveX) {
-			if (boxToMove) {
-				if (!detectObstacle(boxToMove, "x")) {
-					boxToMove.x += game.moveDist * move.x;
-					loadedData.player.x += game.moveDist * move.x;
-				}
+			if (boxToMove.size > 0) {
+				boxToMove.forEach(box => box.x += game.moveDist * move.x);
+				loadedData.player.x += game.moveDist * move.x;
 			}
 			else loadedData.player.x += game.moveDist * move.x;
 		}
 
 		if (canMoveY && !detectObstacle(loadedData.player, "y")) {
-			if (boxToMove) {
-				if (!detectObstacle(boxToMove, "y")) {
-					boxToMove.y += game.moveDist * move.y;
-					loadedData.player.y += game.moveDist * move.y;
-				}
+			if (boxToMove.size > 0) {
+				boxToMove.forEach(box => box.y += game.moveDist * move.y);
+				loadedData.player.y += game.moveDist * move.y;
 			}
 			else loadedData.player.y += game.moveDist * move.y;
 		}
@@ -315,7 +306,7 @@ function movement() {
 	if (move.x === 0 && move.y === 0) {
 		if (inputs.lastMove !== 0) inputs.lastMove = 0;
 	}
-	
+
 	if (move.x !== 0 || move.y !== 0) {
 		if (inputs.lastMove === 0) movePlayer();
 		if (inputs.lastMove !== 0) {
