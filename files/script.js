@@ -1,8 +1,6 @@
 class Canvas {
 	constructor(canvasElement) {
 		this.ele = canvasElement;
-		this.ele.width = 320;
-		this.ele.height = 288;
 		this.ctx = this.ele.getContext("2d");
 	}
 
@@ -11,7 +9,7 @@ class Canvas {
 	}
 }
 
-const canvas0 = new Canvas(document.createElement("canvas"));
+const canvas0 = new Canvas(document.getElementById("canvasLayer0"));
 const canvas1 = new Canvas(document.getElementById("canvasLayer1"));
 const canvas2 = new Canvas(document.getElementById("canvasLayer2"));
 
@@ -147,9 +145,7 @@ class Button extends GameObject {
 }
 
 function loadMap(inputId) {
-	let mapId = 0;
-
-	if (mapData[inputId]) mapId = inputId;
+	let mapId = mapData[inputId] ? inputId : 0;
 
 	canvas0.clear();
 	canvas1.clear();

@@ -43,6 +43,11 @@ canvas {
 	border: 1px solid #FFFFFF;
 }
 
+#canvasLayer0 {
+	display: none;
+	position: absolute;
+}
+
 #canvasLayer1 {
 	grid-column: 1 / 2;
 	grid-row: 2 / 3;
