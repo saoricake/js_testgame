@@ -225,7 +225,7 @@ function movement() {
 
 	let boxToMove = new Set();
 
-	function detectObstacle(subject, mainAxis) {
+	function obstacleDetected(subject, mainAxis) {
 		let canvasLimit;
 		let sideAxis;
 
@@ -243,7 +243,7 @@ function movement() {
 		let sbjSideStart = subject[sideAxis];
 		let sbjSideEnd = subject[sideAxis] + game.tileSize;
 
-		function detectDynamicObstacle() {
+		function dynamicObstacleDetected() {
 			return loadedData.boxes.some((obs) => {
 				let obsSideStart = obs[sideAxis];
 				let obsSideEnd = obs[sideAxis] + game.tileSize;
@@ -254,14 +254,14 @@ function movement() {
 				) {}
 				else return false;
 
-				if (subject === loadedData.player && move[sideAxis] === 0 && !detectObstacle(obs, mainAxis)) {
+				if (subject === loadedData.player && move[sideAxis] === 0 && !obstacleDetected(obs, mainAxis)) {
 					boxToMove.add(obs);
 					return false;
 				} else return true;
 			});
 		}
 
-		function detectStaticObstacle() {
+		function staticObstacleDetected() {
 			return loadedData.walls.some((obs) => {
 				let obsSideStart = obs[sideAxis];
 				let obsSideEnd = obs[sideAxis] + game.tileSize;
@@ -273,16 +273,16 @@ function movement() {
 			});
 		}
 
-		function detectOOB() {
+		function oobDetected() {
 			return subject[mainAxis] + game.tileSize * Math.max(0, move[mainAxis]) === canvasLimit * Math.max(0, move[mainAxis]);
 		}
 
-		return detectDynamicObstacle() || detectStaticObstacle() || detectOOB();
+		return dynamicObstacleDetected() || staticObstacleDetected() || oobDetected();
 	}
 
 	function movePlayer() {
-		let canMoveX = (move.x !== 0 && !detectObstacle(loadedData.player, "x"));
-		let canMoveY = (move.y !== 0 && !detectObstacle(loadedData.player, "y"));
+		let canMoveX = (move.x !== 0 && !obstacleDetected(loadedData.player, "x"));
+		let canMoveY = (move.y !== 0 && !obstacleDetected(loadedData.player, "y"));
 
 		if (canMoveX) {
 			if (boxToMove.size > 0) {
@@ -292,7 +292,7 @@ function movement() {
 			else loadedData.player.x += game.moveDist * move.x;
 		}
 
-		if (canMoveY && !detectObstacle(loadedData.player, "y")) {
+		if (canMoveY && !obstacleDetected(loadedData.player, "y")) {
 			if (boxToMove.size > 0) {
 				boxToMove.forEach(box => box.y += game.moveDist * move.y);
 				loadedData.player.y += game.moveDist * move.y;
