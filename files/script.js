@@ -182,22 +182,22 @@ const inputs = {
 }
 
 function keyPressListener(event) {
-	if (event.key === controller.up && inputs.up === 0) inputs.up = Date.now();
-	if (event.key === controller.down && inputs.down === 0) inputs.down = Date.now();
-	if (event.key === controller.left && inputs.left === 0) inputs.left = Date.now();
-	if (event.key === controller.right && inputs.right === 0) inputs.right = Date.now();
+	if (event.key === controller.up) inputs.up ||= Date.now();
+	if (event.key === controller.down) inputs.down ||= Date.now();
+	if (event.key === controller.left) inputs.left ||= Date.now();
+	if (event.key === controller.right) inputs.right ||= Date.now();
 }
 
 function keyReleaseListener(event) {
-	if (event.key === controller.up && inputs.up > 0) inputs.up = 0;
-	if (event.key === controller.down && inputs.down > 0) inputs.down = 0;
-	if (event.key === controller.left && inputs.left > 0) inputs.left = 0;
-	if (event.key === controller.right && inputs.right > 0) inputs.right = 0;
+	if (event.key === controller.up) inputs.up &&= 0;
+	if (event.key === controller.down) inputs.down &&= 0;
+	if (event.key === controller.left) inputs.left &&= 0;
+	if (event.key === controller.right) inputs.right &&= 0;
 }
 
 function movement() {
 	let currentTime = Date.now();
-
+	let boxesToMove = new Set();
 	let move = {
 		x: 0,
 		y: 0
@@ -223,11 +223,8 @@ function movement() {
 			break;
 	}
 
-	let boxToMove = new Set();
-
 	function obstacleDetected(subject, mainAxis) {
-		let canvasLimit;
-		let sideAxis;
+		let canvasLimit, sideAxis;
 
 		switch (mainAxis) {
 			case "x":
@@ -240,13 +237,13 @@ function movement() {
 				break;
 		}
 
-		let sbjSideStart = subject[sideAxis];
-		let sbjSideEnd = subject[sideAxis] + game.tileSize;
+		const sbjSideStart = subject[sideAxis];
+		const sbjSideEnd = subject[sideAxis] + game.tileSize;
 
 		function dynamicObstacleDetected() {
 			return loadedData.boxes.some((obs) => {
-				let obsSideStart = obs[sideAxis];
-				let obsSideEnd = obs[sideAxis] + game.tileSize;
+				const obsSideStart = obs[sideAxis];
+				const obsSideEnd = obs[sideAxis] + game.tileSize;
 
 				if (
 					(subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis])
@@ -255,7 +252,7 @@ function movement() {
 				else return false;
 
 				if (subject === loadedData.player && move[sideAxis] === 0 && !obstacleDetected(obs, mainAxis)) {
-					boxToMove.add(obs);
+					boxesToMove.add(obs);
 					return false;
 				} else return true;
 			});
@@ -263,8 +260,8 @@ function movement() {
 
 		function staticObstacleDetected() {
 			return loadedData.walls.some((obs) => {
-				let obsSideStart = obs[sideAxis];
-				let obsSideEnd = obs[sideAxis] + game.tileSize;
+				const obsSideStart = obs[sideAxis];
+				const obsSideEnd = obs[sideAxis] + game.tileSize;
 				
 				return (
 					(subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis])
@@ -281,38 +278,22 @@ function movement() {
 	}
 
 	function movePlayer() {
-		let canMoveX = (move.x !== 0 && !obstacleDetected(loadedData.player, "x"));
-		let canMoveY = (move.y !== 0 && !obstacleDetected(loadedData.player, "y"));
+		let canMove = {
+			x: move.x !== 0 && !obstacleDetected(loadedData.player, "x"),
+			y: move.y !== 0 && !obstacleDetected(loadedData.player, "y")
+		}
 
-		if (canMoveX) {
-			if (boxToMove.size > 0) {
-				boxToMove.forEach(box => box.x += game.moveDist * move.x);
-				loadedData.player.x += game.moveDist * move.x;
+		for (const axis in move) {
+			if (canMove[axis] && !obstacleDetected(loadedData.player, axis)) {
+				boxesToMove.forEach(box => box[axis] += game.moveDist * move[axis]);
+				loadedData.player[axis] += game.moveDist * move[axis];
+				inputs.lastMove = currentTime;
 			}
-			else loadedData.player.x += game.moveDist * move.x;
-		}
-
-		if (canMoveY && !obstacleDetected(loadedData.player, "y")) {
-			if (boxToMove.size > 0) {
-				boxToMove.forEach(box => box.y += game.moveDist * move.y);
-				loadedData.player.y += game.moveDist * move.y;
-			}
-			else loadedData.player.y += game.moveDist * move.y;
-		}
-
-		if (canMoveX || canMoveY) inputs.lastMove = currentTime;
-	}
-
-	if (move.x === 0 && move.y === 0) {
-		if (inputs.lastMove !== 0) inputs.lastMove = 0;
-	}
-
-	if (move.x !== 0 || move.y !== 0) {
-		if (inputs.lastMove === 0) movePlayer();
-		if (inputs.lastMove !== 0) {
-			if (currentTime - inputs.lastMove >= game.moveSpeed) movePlayer();
 		}
 	}
+
+	if (move.x === 0 && move.y === 0) inputs.lastMove &&= 0;
+	if ((move.x !== 0 || move.y !== 0) && currentTime - inputs.lastMove >= game.moveSpeed) movePlayer();
 }
 
 function draw() {
@@ -329,11 +310,10 @@ function update() {
 	movement();
 	draw();
 
-	if (checkButtons() === false) setTimeout(() => window.requestAnimationFrame(update), game.frameRate);
-	else {
+	if (checkButtons()) {
 		currentMapText.innerText = `level ${loadedData.id + 1} complete`;
 		setTimeout(() => loadMap(loadedData.id + 1), 1000);
-	}
+	} else setTimeout(() => window.requestAnimationFrame(update), game.frameRate);
 }
 
 document.addEventListener("keydown", keyPressListener);
