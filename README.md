@@ -1,2 +1,2 @@
 # js_testgame
- just figuring out how a tile-based game would work
+ playable at https://nothinghappens.neocities.org/stuff/testgame/index.html
