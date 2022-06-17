@@ -1,27 +1,34 @@
+// define a class for the canvases
 class Canvas {
+	// canvasElement: must be an HTMLCanvasElement
 	constructor(canvasElement) {
 		this.ele = canvasElement;
 		this.ctx = this.ele.getContext("2d");
 	}
 
+	// instance method that clears the calling canvas
 	clear() {
 		this.ctx.clearRect(0, 0, this.ele.width, this.ele.height);
 	}
 }
 
-const canvas0 = new Canvas(document.getElementById("canvasLayer0"));
-const canvas1 = new Canvas(document.getElementById("canvasLayer1"));
-const canvas2 = new Canvas(document.getElementById("canvasLayer2"));
+// create the canvas objects.
+const canvas0 = new Canvas(document.getElementById("canvasLayer0")); // invisible canvas where sprites are drawn and copied from
+const canvas1 = new Canvas(document.getElementById("canvasLayer1")); // where walls are drawn
+const canvas2 = new Canvas(document.getElementById("canvasLayer2")); // where moving objects (the player and boxes) are drawn
 
+// get the <div> where the current level's number is displayed
 const currentMapText = document.getElementById("divCurrentMap");
 
+// define the game's parameters
 const game = {
-	tileSize: 32,
-	moveDist: 16,
-	frameRate: 1000 / 60,
-	moveSpeed: 1000 / 10
+	tileSize: 32, // the size of a "tile", in pixels
+	moveDist: 16, // how much moving objects move per frame, also in pixels. must be half of tileSize
+	gameSpeed: 1000 / 60, // the interval between game frames, in ms. calculated as (1000 / fps)
+	moveSpeed: 1000 / 10 // the interval between player movement "steps" if a movement key is held down, in ms
 }
 
+// this is where live game object data is loaded to, held, and modified while stuff is going on
 const loadedData = {
 	id: 0,
 	player: {},
@@ -30,6 +37,7 @@ const loadedData = {
 	buttons: []
 }
 
+// database of maps and their game objects. the X and Y values are the initial coordinates (IN TILES) of the objects
 const mapData = [
 	{
 		player: {
@@ -80,10 +88,12 @@ const mapData = [
 	}
 ];
 
+// define a generic class for game objects
 class GameObject {
 	static targetCanvas = canvas0;
 	static color = "#000000";
-	static tileId = 0;
+	static tileId = 0; // where in canvas0 (horizontally) this class' sprite will be drawn
+
 	static loadSprite() {
 		canvas0.ctx.fillStyle = this.color;
 		canvas0.ctx.fillRect(
@@ -92,12 +102,15 @@ class GameObject {
 		);
 	}
 
+	// objMapData: an individual game object from mapData
+	// NOTE: in mapData, objects' coordinates are saved in tiles, so here we multiply them by tileSize to get the same coordinates but in pixels.
 	constructor(objMapData) {
 		this.x = objMapData.x * game.tileSize;
 		this.y = objMapData.y * game.tileSize;
 		this.draw();
 	}
 
+	// instance method to copy the calling object's sprite from canvas0 and paste it on targetCanvas ("draw" it)
 	draw() {
 		this.constructor.targetCanvas.ctx.drawImage(
 			canvas0.ele,
@@ -107,6 +120,7 @@ class GameObject {
 	}
 }
 
+// subclasses for the player character, walls, boxes, and buttons
 class Player extends GameObject {
 	static targetCanvas = canvas2;
 	static color = "#FF0000";
@@ -129,6 +143,8 @@ class Button extends GameObject {
 	static targetCanvas = canvas1;
 	static color = "#888888";
 	static tileId = 3;
+
+	// a different loadSprite() for buttons so they'll look like small circles instead of squares
 	static loadSprite() {
 		canvas0.ctx.fillStyle = this.color;
 		canvas0.ctx.beginPath();
@@ -139,11 +155,14 @@ class Button extends GameObject {
 		canvas0.ctx.fill();
 	}
 
+	// instance method to check if a box has the same coordinates as the calling button
 	checkPressed() {
 		return loadedData.boxes.some(box => this.x === box.x && this.y === box.y);
 	}
 }
 
+// function for loading a new map.
+// inputId: an integer. if mapData[inputId] exists, then that map is loaded; if it doesn't, mapData[0] is loaded instead.
 function loadMap(inputId) {
 	let mapId = mapData[inputId] ? inputId : 0;
 
@@ -166,6 +185,7 @@ function loadMap(inputId) {
 	window.requestAnimationFrame(update);
 }
 
+// map arrow keys to movement
 const controller = {
 	up: "ArrowUp",
 	down: "ArrowDown",
@@ -173,6 +193,8 @@ const controller = {
 	right: "ArrowRight"
 }
 
+// the properties of input keep track of whether inputs are being made or not.
+// lastMove: the time (in ms since the UNIX epoch) when movement was last applied. this is used later.
 const inputs = {
 	up: 0,
 	down: 0,
@@ -181,6 +203,9 @@ const inputs = {
 	lastMove: 0
 }
 
+// listeners for pressing and releasing keys.
+// NOTE 1: UNIX time is used instead of simple booleans so that if, for example, both left and right are held down at the same time, priority can be given to the one that was pressed last.
+// NOTE 2: it might have been possible to have multiple keys work for each input, allowing for e.g. wasd as well. maybe if the properties of controller were arrays, and the listeners checked for the key with controller[n].find() or something. although i'd then need to account for what would happen if you, say, held both right and d down at the same time, or let one go but kept holding the other down...
 function keyPressListener(event) {
 	if (event.key === controller.up) inputs.up ||= Date.now();
 	if (event.key === controller.down) inputs.down ||= Date.now();
@@ -195,14 +220,18 @@ function keyReleaseListener(event) {
 	if (event.key === controller.right) inputs.right &&= 0;
 }
 
+// the function for handling movement
 function movement() {
 	let currentTime = Date.now();
 	let boxesToMove = new Set();
+
+	// move: a simplification of the values in input. you can't move in opposite directions at once, so each axis has three values it can be: -1, 0, and +1. which one each is is determined by which of the associated inputs was pressed last, if any, as described earlier.
+	// NOTE 1: the 0 in Math.max() and case 0 are required so that the move properties don't default to -1 if all the inputs are unpressed (0).
+	// NOTE 2: it really feels like there must be a simpler way of doing this, that doesn't involve switches, but... i couldn't figure it out! ugh
 	let move = {
 		x: 0,
 		y: 0
 	}
-
 	switch (Math.max(0, inputs.up, inputs.down)) {
 		case 0: break;
 		case inputs.up:
@@ -212,7 +241,6 @@ function movement() {
 			move.y = +1;
 			break;
 	}
-
 	switch (Math.max(0, inputs.left, inputs.right)) {
 		case 0: break;
 		case inputs.left:
@@ -223,9 +251,13 @@ function movement() {
 			break;
 	}
 
+	// function for detecting collision.
+	// subject: the object that is doing the moving. can be either the player or a box that's being pushed.
+	// mainAxis: the primary axis along which the subject is moving.
+	// NOTE 1: the function is named "obstacleDetected" because it works like it's answering a question; it returns true (yes) if an obstacle is indeed detected, and false (no) if not. naming it like this makes more sense than if i'd called it "collisionHandler" or something.
+	// NOTE 2: the reason "mainAxis" is a thing is so that the function will only check for collision along a single axis at a time. this might sound inefficient compared to just having it check collision on both axes at once, but if i did that, then moving diagonally into a wall would cause the player to stop moving entirely, instead of simply moving along it.
 	function obstacleDetected(subject, mainAxis) {
 		let canvasLimit, sideAxis;
-
 		switch (mainAxis) {
 			case "x":
 				canvasLimit = canvas2.ele.width;
@@ -237,9 +269,11 @@ function movement() {
 				break;
 		}
 
+		// save the "width" of the subject. i didn't have to save these values, but doing so makes the math below more readable.
 		const sbjSideStart = subject[sideAxis];
 		const sbjSideEnd = subject[sideAxis] + game.tileSize;
 
+		// function for detecting collisions with dynamic obstacles (i.e. boxes)
 		function dynamicObstacleDetected() {
 			return loadedData.boxes.some((obs) => {
 				const obsSideStart = obs[sideAxis];
@@ -251,6 +285,7 @@ function movement() {
 				) {}
 				else return false;
 
+				// if the subject is the player, they're only moving along the main axis, and the box is not itself incapable of moving, then add it to boxesToMove and return false.
 				if (subject === loadedData.player && move[sideAxis] === 0 && !obstacleDetected(obs, mainAxis)) {
 					boxesToMove.add(obs);
 					return false;
@@ -258,6 +293,7 @@ function movement() {
 			});
 		}
 
+		// function for detecting collisions with static objects (walls)
 		function staticObstacleDetected() {
 			return loadedData.walls.some((obs) => {
 				const obsSideStart = obs[sideAxis];
@@ -270,6 +306,7 @@ function movement() {
 			});
 		}
 
+		// function for detecting collisions with the edge of the canvas (out-of-bounds)
 		function oobDetected() {
 			return subject[mainAxis] + game.tileSize * Math.max(0, move[mainAxis]) === canvasLimit * Math.max(0, move[mainAxis]);
 		}
@@ -278,11 +315,15 @@ function movement() {
 	}
 
 	function movePlayer() {
+		// check whether the player can, from their current position, move along either axis
 		let canMove = {
 			x: move.x !== 0 && !obstacleDetected(loadedData.player, "x"),
 			y: move.y !== 0 && !obstacleDetected(loadedData.player, "y")
 		}
 
+		// iterate over canMove to apply movement to any boxes in boxesToMove, as well as the player.
+		// NOTE 1: collision needs to be checked again here. if it wasn't, the fact that X movement happens before Y movement means X movement could put you in a position where Y movement is not longer possible, even though it was before any movement happened.
+		// NOTE 2: if the player could push boxes while moving diagonally, this code would likely make boxes not move as intended, as they're moved once for each axis... you can't do that, so it's not a problem, but that's something to keep in mind
 		for (const axis in move) {
 			if (canMove[axis] && !obstacleDetected(loadedData.player, axis)) {
 				boxesToMove.forEach(box => box[axis] += game.moveDist * move[axis]);
@@ -292,28 +333,38 @@ function movement() {
 		}
 	}
 
+	// if movement keys were not being pressed this frame, set lastMove to 0 (if it wasn't 0 already).
+	// if movement keys were pressed, AND lastInput is 0 or it happened more than moveSpeed ms ago, move the player.
+	// NOTE: i'm still surprised that currentTime - inputs.lastMove >= game.moveSpeed checks for both those things by itself... lol
 	if (move.x === 0 && move.y === 0) inputs.lastMove &&= 0;
 	if ((move.x !== 0 || move.y !== 0) && currentTime - inputs.lastMove >= game.moveSpeed) movePlayer();
 }
 
+// function for drawing the player and boxes. walls are not included because they can't move.
+// NOTE: it would've been nice to have this set so things are only drawn on frames where they've moved...
 function draw() {
 	loadedData.player.draw();
 	loadedData.boxes.forEach(box => box.draw());
 }
 
+// function for checking whether every button in the map is pressed or not.
+// NOTE: maybe it could've been a static method of the Buttons class...?
 function checkButtons() {
 	return loadedData.buttons.every(button => button.checkPressed());
 }
 
+// function for updating the game state and drawing new frames.
 function update() {
 	canvas2.clear();
 	movement();
 	draw();
 
+	// if all the buttons in the stage are pressed, show a "level complete" message and pause the game for 1s, then load the next map.
+	// else, call this function again in gameSpeed ms.
 	if (checkButtons()) {
 		currentMapText.innerText = `level ${loadedData.id + 1} complete`;
 		setTimeout(() => loadMap(loadedData.id + 1), 1000);
-	} else setTimeout(() => window.requestAnimationFrame(update), game.frameRate);
+	} else setTimeout(() => window.requestAnimationFrame(update), game.gameSpeed);
 }
 
 document.addEventListener("keydown", keyPressListener);
