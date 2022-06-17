@@ -269,21 +269,23 @@ function movement() {
 				break;
 		}
 
-		// save the "width" of the subject. i didn't have to save these values, but doing so makes the math below more readable.
-		const sbjSideStart = subject[sideAxis];
-		const sbjSideEnd = subject[sideAxis] + game.tileSize;
+		// general-purpose function for checking if the subject is adjacent to an obstacle
+		function adjacentObstacleDetected(obs) {
+			const sbjSideStart = subject[sideAxis];
+			const sbjSideEnd = subject[sideAxis] + game.tileSize;
+			const obsSideStart = obs[sideAxis];
+			const obsSideEnd = obs[sideAxis] + game.tileSize;
+
+			return (
+				(subject[mainAxis] + game.tileSize * Math.max(0, move[mainAxis]) === obs[mainAxis] + game.tileSize * Math.max(0, -move[mainAxis]))
+				&& ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd))
+			);
+		}
 
 		// function for detecting collisions with dynamic obstacles (i.e. boxes)
 		function dynamicObstacleDetected() {
 			return loadedData.boxes.some((obs) => {
-				const obsSideStart = obs[sideAxis];
-				const obsSideEnd = obs[sideAxis] + game.tileSize;
-
-				if (
-					(subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis])
-					&& ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd))
-				) {}
-				else return false;
+				if (!adjacentObstacleDetected(obs)) return false;
 
 				// if the subject is the player, they're only moving along the main axis, and the box is not itself incapable of moving, then add it to boxesToMove and return false.
 				if (subject === loadedData.player && move[sideAxis] === 0 && !obstacleDetected(obs, mainAxis)) {
@@ -295,15 +297,7 @@ function movement() {
 
 		// function for detecting collisions with static objects (walls)
 		function staticObstacleDetected() {
-			return loadedData.walls.some((obs) => {
-				const obsSideStart = obs[sideAxis];
-				const obsSideEnd = obs[sideAxis] + game.tileSize;
-				
-				return (
-					(subject[mainAxis] + game.tileSize * move[mainAxis] === obs[mainAxis])
-					&& ((sbjSideStart >= obsSideStart && sbjSideStart < obsSideEnd) || (sbjSideEnd > obsSideStart && sbjSideEnd <= obsSideEnd))
-				);
-			});
+			return loadedData.walls.some(obs => adjacentObstacleDetected(obs));
 		}
 
 		// function for detecting collisions with the edge of the canvas (out-of-bounds)
